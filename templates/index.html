@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GPS-Manhattan-API</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,100..1000&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bangers&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --primary: #2d3142;
+        --primary-dark: #4f5d75;
+        --accent: #ef8354;
+        --background: #ffffff;
+        --panel-bg: #dcdcdd;
+        --shadow: 0 4px 24px rgba(77, 93, 117, 0.1);
+        --border-radius: 18px;
+        --font-main: "Roboto Flex", Arial, sans-serif;
+        --font-title: "Bangers", cursive;
+        --font-label: "DynaPuff", system-ui;
+        --danger: #ef8354;
+        --highlight: #4f5d75;
+      }
+
+      body {
+        font-family: var(--font-main);
+        background: var(--background);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        width: 100vw;
+        overflow-x: hidden;
+      }
+
+      .main-layout {
+        display: flex;
+        flex-direction: row;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #panel {
+        background: var(--panel-bg);
+        border-radius: 0 var(--border-radius) var(--border-radius) 0;
+        box-shadow: var(--shadow);
+        width: 30vw;
+        min-width: 320px;
+        max-width: 480px;
+        padding: 0 32px 18px 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        height: 100vh;
+        overflow-y: auto;
+        position: relative;
+        z-index: 2;
+      }
+
+      .title-container {
+        background: linear-gradient(90deg, #2d3142 0%, #4f5d75 100%);
+        padding: 32px 0 18px 0;
+        box-shadow: var(--shadow);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 0 var(--border-radius) 0 0;
+        margin: -1px -32px 0 -32px;
+      }
+
+      .title {
+        font-family: var(--font-title);
+        font-size: 42px;
+        color: #fff;
+        letter-spacing: 2px;
+        margin: 0;
+        text-shadow: 1px 2px 8px rgba(0, 0, 0, 0.13);
+      }
+
+      .controles {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        align-items: stretch;
+        width: 100%;
+        margin-top: 18px;
+      }
+
+      .grupo-coordenadas {
+        background: #fff;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 8px rgba(62, 64, 66, 0.08);
+        padding: 24px 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: end;
+        justify-content: flex-start;
+        gap: 18px;
+        width: 80%;
+        min-width: 220px;
+        margin: 0 auto;
+      }
+
+      #busquedaManual {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        padding-left: 10px;
+        align-items: start;
+        justify-content: start;
+      }
+
+      #coordenadasManual {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        padding-left: 10px;
+        align-items: start;
+        justify-content: start;
+      }
+      #coordTop {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        padding-left: 10px;
+        align-items: start;
+        justify-content: start;
+      }
+
+      label,
+      .text {
+        font-family: var(--font-label);
+        font-weight: 600;
+        color: #2d3142;
+        font-size: 1.05em;
+        margin-right: 6px;
+      }
+      input {
+        width: 80%;
+        max-width: 300px;
+        align-items: center;
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        font-family: var(--font-main);
+        font-size: 16px;
+        padding: 10px 14px;
+        background: #e5e6e4;
+        border: 1.5px solid #4f5d75;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(77, 93, 117, 0.07);
+        transition: border 0.2s, box-shadow 0.2s;
+        outline: none;
+        margin-right: 6px;
+        color: #2d3142;
+      }
+      input[type="text"]:focus,
+      input[type="number"]:focus {
+        border: 1.5px solid var(--primary);
+        box-shadow: 0 2px 8px rgba(77, 93, 117, 0.13);
+      }
+
+      .calcularBtn,
+      #coords-btn,
+      #buscar-btn,
+      #reset-btn {
+        font-family: var(--font-label);
+        font-size: 1em;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 22px;
+        margin-left: 8px;
+        box-shadow: 0 2px 8px rgba(77, 93, 117, 0.1);
+        cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s;
+      }
+      .calcularBtn:hover,
+      #coords-btn:hover,
+      #buscar-btn:hover {
+        background: var(--primary-dark);
+        box-shadow: 0 4px 16px rgba(77, 93, 117, 0.16);
+      }
+      #reset-btn {
+        background: var(--accent);
+        border: none;
+        color: #fff;
+        margin-left: 0;
+        padding: 10px 22px;
+        transition: background 0.2s;
+      }
+      #reset-btn:hover {
+        background: #d96c38;
+      }
+
+      .grupo-modos {
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
+        margin-top: 8px;
+        justify-content: flex-start;
+      }
+      .btn-null {
+        display: none;
+      }
+      .transport-btn {
+        background: #bfc0c0;
+        color: #2d3142;
+        border: 1.5px solid #4f5d75;
+        border-radius: 8px;
+        font-size: 1.1em;
+        padding: 10px 18px;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s, border 0.2s;
+        font-family: var(--font-label);
+        font-weight: 600;
+      }
+      .transport-btn.active,
+      .transport-btn:focus {
+        background: var(--primary);
+        color: #fff;
+        border: 1.5px solid var(--primary-dark);
+      }
+      .transport-btn:hover:not(.active) {
+        background: var(--highlight);
+        color: #fff;
+      }
+      .transport-btn:disabled {
+        background: #e0e0e0;
+        color: #bdbdbd;
+        cursor: not-allowed;
+        border: 1.5px solid #e0e0e0;
+      }
+
+      .grupo-botones {
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
+        margin-top: 8px;
+        justify-content: flex-start;
+      }
+
+      .grupo-restricciones {
+        background: #bfc0c0;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 8px rgba(77, 93, 117, 0.1);
+        padding: 24px 18px;
+        width: 90%;
+        min-width: 180px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      #resultados-detallados {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        margin-top: 0;
+      }
+      .result-row {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 0;
+        border-bottom: 1px solid #4f5d75;
+        font-size: 1.05em;
+      }
+      .result-label {
+        font-family: var(--font-label);
+        color: #2d3142;
+        font-weight: 500;
+      }
+      .result-value {
+        font-family: var(--font-main);
+        color: #2d3142;
+        font-weight: 500;
+      }
+      .highlight {
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      #info {
+        font-family: var(--font-main);
+        font-size: 1.2em;
+        color: #2d3142;
+        margin: 8px 0 0 0;
+        min-height: 28px;
+        text-align: center;
+        letter-spacing: 0.01em;
+      }
+
+      .grupo-lugares {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 24px;
+        width: 100%;
+        margin-top: 10px;
+        padding-left: 8px;
+      }
+      .txtInicio,
+      .txtDestino {
+        font-family: var(--font-main);
+        font-weight: 500;
+        color: #2d3142;
+        font-size: 1.08em;
+        background: #bfc0c0;
+        border-radius: 6px;
+        padding: 4px 12px;
+        margin-right: 6px;
+      }
+
+      .map-container {
+        width: 70vw;
+        height: 100vh;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        background: #4f5d75;
+        position: relative;
+        z-index: 1;
+      }
+      #map {
+        height: 96vh;
+        width: 98%;
+        min-width: 320px;
+        max-width: 100%;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        border: 1.5px solid #2d3142;
+        margin: 2vh auto;
+        background: #fff;
+      }
+
+      @media (max-width: 900px) {
+        .main-layout {
+          flex-direction: column;
+          height: auto;
+        }
+        #panel,
+        .map-container {
+          width: 100vw;
+          min-width: unset;
+          max-width: unset;
+          height: auto;
+        }
+        #panel {
+          border-radius: 0 0 var(--border-radius) var(--border-radius);
+          padding: 0 8vw 18px 8vw;
+        }
+        .map-container {
+          min-height: 340px;
+          height: 60vh;
+        }
+        #map {
+          width: 98vw;
+          min-width: unset;
+          height: 56vh;
+        }
+        #nombreInicio,
+        #nombreDestino {
+          color: #2d3142;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-layout">
+      <div id="panel">
+        <div class="title-container">
+          <h2 class="title">: GPS MANHATTAN :</h2>
+        </div>
+        <div class="controles">
+          <div class="grupo-coordenadas">
+            <div id="busquedaManual">
+              <label for="inicio-search-input" class="content-text"
+                ><b class="text">Buscar inicio:</b></label
+              >
+              <input
+                type="text"
+                id="inicio-search-input"
+                placeholder="Ejemplo: Jilotepec, México"
+                size="30"
+              />
+              <label for="destino-search-input" class="content-text"
+                ><b class="text">Buscar destino:</b></label
+              >
+              <input
+                type="text"
+                id="destino-search-input"
+                placeholder="Ejemplo: Atlacomulco, México"
+                size="30"
+              />
+              <button id="buscar-btn" class="calcularBtn">
+                Buscar por nombre
+              </button>
+            </div>
+            <div id="coordenadasManual" style="margin-top: 10px">
+              <label><b class="text">Lat/Lon inicio:</b></label>
+              <input
+                type="number"
+                id="latInicio"
+                placeholder="Latitud inicio"
+                step="any"
+              />
+              <input
+                type="number"
+                id="lngInicio"
+                placeholder="Longitud inicio"
+                step="any"
+              />
+              <div class="coordDown"></div>
+              <label><b class="text">Lat/Lon destino:</b></label>
+              <input
+                type="number"
+                id="latDestino"
+                placeholder="Latitud destino"
+                step="any"
+              />
+              <input
+                type="number"
+                id="lngDestino"
+                placeholder="Longitud destino"
+                step="any"
+              />
+              <button id="coords-btn" class="calcularBtn">
+                Buscar por coordenadas
+              </button>
+            </div>
+            <div class="grupo-botones" style="margin-top: 10px">
+              <button id="reset-btn">Reiniciar</button>
+            </div>
+            <div class="grupo-modos" style="margin-top: 10px">
+              <button id="mode-walking" class="transport-btn">🚶 A pie</button>
+              <button id="mode-driving" class="transport-btn">🚗 Auto</button>
+              <button id="mode-flight" class="transport-btn">✈️ Vuelo</button>
+              <button id="mode-transit" class="transport-btn btn-null"></button>
+            </div>
+          </div>
+
+          <div id="costos" class="grupo-restricciones">
+            <div id="resultados-detallados">
+              <div class="result-row">
+                <span class="result-label">Esperando cálculo...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="lugaresRuta" class="grupo-lugares">
+          <span id="nombreInicio" class="txtInicio">Inicio: </span>
+          <span id="nombreDestino" class="txtDestino">Destino: </span>
+        </div>
+      </div>
+      <div class="map-container">
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+  </body>
+</html>
